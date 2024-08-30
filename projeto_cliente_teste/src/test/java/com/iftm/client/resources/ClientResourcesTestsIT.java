@@ -10,14 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.Instant;
+import java.util.Collections;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -195,7 +196,38 @@ class ClientResourcesTestsIT {
 
                 mockMvc.perform(get("/clients/{id}", testNonExistingId)
                                 .accept(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isNotFound());
+                               
+        }
+
+
+
+        @Test
+        void deveRetornarNaoEncontradoQuandoIdNaoExiste() throws Exception {
+            Long idNaoExistente = 999L; // ID que não existe
+        
+            // Mockando a exceção que será lançada
+            when(clientService.findById(idNaoExistente))
+                    .thenThrow(new ResourceNotFoundException("Entity not found"));
+        
+            ResultActions result = mockMvc.perform(get("/clients/{id}", idNaoExistente)
+                            .accept(MediaType.APPLICATION_JSON));
+        
+            result.andExpect(status().isMe())
+                  .andExpect(jsonPath("$.error").value("Resource not found"))
+                  .andExpect(jsonPath("$.message").value("Entity not found"))
+                  .andExpect(jsonPath("$.path").value("/clients/" + idNaoExistente));
+        }
+
+
+
+        @Test
+        void deveRetornarSemConteudoQuandoIdExisteAoExcluir() throws Exception {
+                doNothing().when(clientService).delete(existingId);
+
+                ResultActions result = mockMvc.perform(delete("/clients/{id}", existingId)
+                                .accept(MediaType.APPLICATION_JSON));
+
+                result.andExpect(status().isNoContent());
         }
 
 }

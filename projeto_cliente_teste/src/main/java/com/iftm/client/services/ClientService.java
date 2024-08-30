@@ -98,7 +98,13 @@ public class ClientService {
 		entity.setChildren(dto.getChildren());
 	}
 
+	@Transactional(readOnly = true)
+	public Page<ClientDTO> findAll(PageRequest pageRequest) {
+		Page<Client> list = repository.findAll(pageRequest);
+		return list.map(ClientDTO::new);
+	}
+	
 	
 
-
 }
+
